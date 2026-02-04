@@ -1,0 +1,46 @@
+name: Build APK (Auto-Detect)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Find and Build
+      run: |
+        echo "🔍 Checking file structure..."
+        ls -R 
+        
+        echo "🎯 Looking for build.gradle file..."
+        # Ye command khud dhundegi ki project kahan hai
+        PROJECT_DIR=$(find . -type f -name "build.gradle" | head -n 1 | xargs dirname)
+        
+        if [ -z "$PROJECT_DIR" ]; then
+          echo "❌ ERROR: Koi Android Project (build.gradle) nahi mila!"
+          exit 1
+        fi
+        
+        echo "✅ Project found in: $PROJECT_DIR"
+        cd "$PROJECT_DIR"
+        
+        echo "🚀 Starting Build using Global Gradle..."
+        gradle assembleDebug --no-daemon --stacktrace
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: My-Auto-APK
+        # Ye star (**) ka matlab hai kahin bhi APK ho, utha lo
+        path: "**/*.apk"
