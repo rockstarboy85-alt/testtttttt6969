@@ -1,0 +1,46 @@
+name: Build APK (Auto-Fix)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Find & Build APK
+      run: |
+        # Ye command khud dhundegi ki gradlew file kahan hai
+        GRADLE_PATH=$(find . -name gradlew | head -n 1)
+        
+        if [ -z "$GRADLE_PATH" ]; then
+          echo "❌ ERROR: gradlew file nahi mili! Shayad aapne upload nahi ki."
+          ls -R
+          exit 1
+        fi
+        
+        echo "✅ Found project at: $GRADLE_PATH"
+        
+        # Project ke folder ke andar jao
+        cd $(dirname $GRADLE_PATH)
+        
+        # Permission do aur Build karo
+        chmod +x gradlew
+        ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: my-debug-apk
+        # Ye APK kahin bhi ho, dhund kar upload karega
+        path: "**/*.apk"
